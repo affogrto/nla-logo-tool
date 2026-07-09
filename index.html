@@ -505,7 +505,7 @@
         </div>
 
         <div class="section">
-          <div class="section-title">ロゴ <span>右下固定</span></div>
+          <div class="section-title">ロゴ <span>右下基準</span></div>
           <div class="preview-logo">
             <canvas id="logoPreview" width="280" height="140"></canvas>
           </div>
@@ -523,6 +523,16 @@
           <div class="row">
             <label class="label" for="marginRange">余白 <output id="marginValue">2%</output></label>
             <input id="marginRange" type="range" min="0.5" max="5" value="2" step="0.1">
+          </div>
+
+          <div class="row">
+            <label class="label" for="offsetXRange">左へ移動 <output id="offsetXValue">0%</output></label>
+            <input id="offsetXRange" type="range" min="0" max="45" value="0" step="0.5">
+          </div>
+
+          <div class="row">
+            <label class="label" for="offsetYRange">上へ移動 <output id="offsetYValue">0%</output></label>
+            <input id="offsetYRange" type="range" min="0" max="45" value="0" step="0.5">
           </div>
 
           <label class="switch" for="shadowToggle">
@@ -564,10 +574,14 @@
       sizeRange: document.getElementById("sizeRange"),
       opacityRange: document.getElementById("opacityRange"),
       marginRange: document.getElementById("marginRange"),
+      offsetXRange: document.getElementById("offsetXRange"),
+      offsetYRange: document.getElementById("offsetYRange"),
       shadowToggle: document.getElementById("shadowToggle"),
       sizeValue: document.getElementById("sizeValue"),
       opacityValue: document.getElementById("opacityValue"),
       marginValue: document.getElementById("marginValue"),
+      offsetXValue: document.getElementById("offsetXValue"),
+      offsetYValue: document.getElementById("offsetYValue"),
       errorBox: document.getElementById("errorBox"),
     };
 
@@ -632,6 +646,8 @@
         sizePercent: Number(els.sizeRange.value),
         opacity: Number(els.opacityRange.value) / 100,
         marginPercent: Number(els.marginRange.value),
+        offsetXPercent: Number(els.offsetXRange.value),
+        offsetYPercent: Number(els.offsetYRange.value),
         threshold: 54,
         softness: 42,
         shadow: els.shadowToggle.checked,
@@ -643,6 +659,8 @@
       els.sizeValue.textContent = `${current.sizePercent}%`;
       els.opacityValue.textContent = `${Math.round(current.opacity * 100)}%`;
       els.marginValue.textContent = `${current.marginPercent}%`;
+      els.offsetXValue.textContent = `${current.offsetXPercent}%`;
+      els.offsetYValue.textContent = `${current.offsetYPercent}%`;
     }
 
     function makeTransparentLogo() {
@@ -779,10 +797,12 @@
 
       const current = values();
       const margin = Math.round(width * (current.marginPercent / 100));
+      const offsetX = Math.round(width * (current.offsetXPercent / 100));
+      const offsetY = Math.round(height * (current.offsetYPercent / 100));
       const logoWidth = Math.round(width * (current.sizePercent / 100));
       const logoHeight = Math.round(logoWidth * (logo.height / logo.width));
-      const x = Math.max(0, width - logoWidth - margin);
-      const y = Math.max(0, height - logoHeight - margin);
+      const x = clamp(width - logoWidth - margin - offsetX, 0, width - logoWidth);
+      const y = clamp(height - logoHeight - margin - offsetY, 0, height - logoHeight);
 
       if (current.shadow) {
         const shadowLogo = tintCanvas(logo, "rgba(20, 20, 22, 1)");
@@ -876,6 +896,8 @@
       els.sizeRange.value = "7";
       els.opacityRange.value = "100";
       els.marginRange.value = "2";
+      els.offsetXRange.value = "0";
+      els.offsetYRange.value = "0";
       els.shadowToggle.checked = false;
       render();
     }
@@ -887,7 +909,7 @@
       els.shareButton.addEventListener("click", shareOutput);
       els.resetButton.addEventListener("click", resetControls);
 
-      [els.sizeRange, els.opacityRange, els.marginRange, els.shadowToggle].forEach((control) => {
+      [els.sizeRange, els.opacityRange, els.marginRange, els.offsetXRange, els.offsetYRange, els.shadowToggle].forEach((control) => {
         control.addEventListener("input", render);
         control.addEventListener("change", render);
       });
