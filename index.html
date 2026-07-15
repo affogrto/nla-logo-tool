@@ -590,6 +590,11 @@
             <span>白背景向けに薄い影を入れる</span>
             <input id="shadowToggle" type="checkbox">
           </label>
+
+          <label class="switch" for="blackLogoToggle">
+            <span>黒ロゴに切り替える</span>
+            <input id="blackLogoToggle" type="checkbox">
+          </label>
         </div>
 
         <div class="error" id="errorBox" role="alert"></div>
@@ -634,6 +639,7 @@
       offsetXRange: document.getElementById("offsetXRange"),
       offsetYRange: document.getElementById("offsetYRange"),
       shadowToggle: document.getElementById("shadowToggle"),
+      blackLogoToggle: document.getElementById("blackLogoToggle"),
       sizeValue: document.getElementById("sizeValue"),
       opacityValue: document.getElementById("opacityValue"),
       marginValue: document.getElementById("marginValue"),
@@ -710,6 +716,7 @@
         threshold: 54,
         softness: 42,
         shadow: els.shadowToggle.checked,
+        blackLogo: els.blackLogoToggle.checked,
       };
     }
 
@@ -828,16 +835,19 @@
       logoPreviewCtx.clearRect(0, 0, els.logoPreview.width, els.logoPreview.height);
       if (!logo) return;
 
+      const current = values();
+      const displayLogo = current.blackLogo ? tintCanvas(logo, "rgba(12, 12, 15, 1)") : logo;
+
       const maxWidth = els.logoPreview.width * 0.72;
       const maxHeight = els.logoPreview.height * 0.8;
-      const scale = Math.min(maxWidth / logo.width, maxHeight / logo.height);
-      const width = logo.width * scale;
-      const height = logo.height * scale;
+      const scale = Math.min(maxWidth / displayLogo.width, maxHeight / displayLogo.height);
+      const width = displayLogo.width * scale;
+      const height = displayLogo.height * scale;
       const x = (els.logoPreview.width - width) / 2;
       const y = (els.logoPreview.height - height) / 2;
       setHighQualitySmoothing(logoPreviewCtx);
-      logoPreviewCtx.globalAlpha = values().opacity;
-      logoPreviewCtx.drawImage(logo, x, y, width, height);
+      logoPreviewCtx.globalAlpha = current.opacity;
+      logoPreviewCtx.drawImage(displayLogo, x, y, width, height);
       logoPreviewCtx.globalAlpha = 1;
     }
 
@@ -864,6 +874,7 @@
       ctx.drawImage(state.sourceImage, 0, 0, width, height);
 
       const current = values();
+      const displayLogo = current.blackLogo ? tintCanvas(logo, "rgba(12, 12, 15, 1)") : logo;
       const margin = Math.round(width * (current.marginPercent / 100));
       const offsetX = Math.round(width * (current.offsetXPercent / 100));
       const offsetY = Math.round(height * (current.offsetYPercent / 100));
@@ -873,7 +884,7 @@
       const y = clamp(height - logoHeight - margin - offsetY, 0, height - logoHeight);
 
       if (current.shadow) {
-        const shadowLogo = tintCanvas(logo, "rgba(20, 20, 22, 1)");
+        const shadowLogo = tintCanvas(displayLogo, "rgba(20, 20, 22, 1)");
         ctx.save();
         ctx.globalAlpha = Math.min(0.24, current.opacity * 0.5);
         ctx.filter = `blur(${Math.max(2, Math.round(width * 0.002))}px)`;
@@ -882,7 +893,7 @@
       }
 
       ctx.globalAlpha = current.opacity;
-      ctx.drawImage(logo, x, y, logoWidth, logoHeight);
+      ctx.drawImage(displayLogo, x, y, logoWidth, logoHeight);
       ctx.globalAlpha = 1;
 
       try {
@@ -968,6 +979,7 @@
       els.offsetXRange.value = "0";
       els.offsetYRange.value = "0";
       els.shadowToggle.checked = false;
+      els.blackLogoToggle.checked = false;
       await loadSelectedLogo();
       await render();
     }
@@ -979,7 +991,7 @@
       els.shareButton.addEventListener("click", shareOutput);
       els.resetButton.addEventListener("click", resetControls);
 
-      [els.sizeRange, els.opacityRange, els.marginRange, els.offsetXRange, els.offsetYRange, els.shadowToggle].forEach((control) => {
+      [els.sizeRange, els.opacityRange, els.marginRange, els.offsetXRange, els.offsetYRange, els.shadowToggle, els.blackLogoToggle].forEach((control) => {
         control.addEventListener("input", render);
         control.addEventListener("change", render);
       });
