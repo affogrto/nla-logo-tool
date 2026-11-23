@@ -252,7 +252,7 @@
 
     .segmented {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 4px;
       padding: 4px;
       border: 1px solid var(--line);
@@ -558,6 +558,8 @@
               <label for="logoTypeReadable">Readable</label>
               <input id="logoTypeMonogram" name="logoType" type="radio" value="monogram">
               <label for="logoTypeMonogram">NLA Only</label>
+              <input id="logoTypeCompact" name="logoType" type="radio" value="compact">
+              <label for="logoTypeCompact">Compact</label>
             </div>
           </div>
 
@@ -607,6 +609,7 @@
       full: "assets/nla-logo.svg",
       readable: "assets/nla-logo-readable.svg",
       monogram: "assets/nla-logo-monogram.svg",
+      compact: "assets/nla-logo-compact.svg",
     };
     const LOGO_RENDER_SCALE = 4;
     const DESKTOP_DEFAULT_SIZE = 10;
