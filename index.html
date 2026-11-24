@@ -392,6 +392,79 @@
       accent-color: var(--accent);
     }
 
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .swatches input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .swatches label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+    }
+
+    .swatches input:checked + label {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .swatches input:focus-visible + label {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .swatch-dot {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .custom-color {
+      display: none;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .custom-color.is-visible {
+      display: grid;
+    }
+
+    .custom-color input {
+      width: 52px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+    }
+
     .preview-logo {
       display: grid;
       place-items: center;
@@ -593,10 +666,27 @@
             <input id="shadowToggle" type="checkbox">
           </label>
 
-          <label class="switch" for="blackLogoToggle">
-            <span>黒ロゴに切り替える</span>
-            <input id="blackLogoToggle" type="checkbox">
-          </label>
+          <div class="row">
+            <div class="label">ロゴの色</div>
+            <div class="swatches" role="radiogroup" aria-label="ロゴの色">
+              <input id="logoColorWhite" name="logoColor" type="radio" value="white" checked>
+              <label for="logoColorWhite"><span class="swatch-dot" style="background:#ffffff"></span>白</label>
+              <input id="logoColorIvory" name="logoColor" type="radio" value="ivory">
+              <label for="logoColorIvory"><span class="swatch-dot" style="background:#efe6d0"></span>アイボリー</label>
+              <input id="logoColorGold" name="logoColor" type="radio" value="gold">
+              <label for="logoColorGold"><span class="swatch-dot" style="background:linear-gradient(160deg,#f6e3a8 0%,#d4ad5a 45%,#9c742f 75%,#e2c47e 100%)"></span>金</label>
+              <input id="logoColorChampagne" name="logoColor" type="radio" value="champagne">
+              <label for="logoColorChampagne"><span class="swatch-dot" style="background:#d8c194"></span>シャンパン</label>
+              <input id="logoColorBlack" name="logoColor" type="radio" value="black">
+              <label for="logoColorBlack"><span class="swatch-dot" style="background:#0c0c0f"></span>黒</label>
+              <input id="logoColorCustom" name="logoColor" type="radio" value="custom">
+              <label for="logoColorCustom"><span class="swatch-dot" id="customColorDot" style="background:#b08bd6"></span>自由に</label>
+            </div>
+            <label class="custom-color" id="customColorRow" for="customColorInput">
+              <span>色を選ぶ <output id="customColorValue">#B08BD6</output></span>
+              <input id="customColorInput" type="color" value="#b08bd6">
+            </label>
+          </div>
         </div>
 
         <div class="error" id="errorBox" role="alert"></div>
@@ -644,7 +734,11 @@
       offsetXRange: document.getElementById("offsetXRange"),
       offsetYRange: document.getElementById("offsetYRange"),
       shadowToggle: document.getElementById("shadowToggle"),
-      blackLogoToggle: document.getElementById("blackLogoToggle"),
+      logoColorInputs: document.querySelectorAll('input[name="logoColor"]'),
+      customColorInput: document.getElementById("customColorInput"),
+      customColorRow: document.getElementById("customColorRow"),
+      customColorValue: document.getElementById("customColorValue"),
+      customColorDot: document.getElementById("customColorDot"),
       sizeValue: document.getElementById("sizeValue"),
       opacityValue: document.getElementById("opacityValue"),
       marginValue: document.getElementById("marginValue"),
@@ -727,8 +821,31 @@
         threshold: 54,
         softness: 42,
         shadow: els.shadowToggle.checked,
-        blackLogo: els.blackLogoToggle.checked,
+        logoColor: document.querySelector('input[name="logoColor"]:checked')?.value || "white",
+        customColor: els.customColorInput.value,
       };
+    }
+
+    // Solid colors, or a function that builds a gradient sized to the logo.
+    const LOGO_PAINTS = {
+      ivory: "#efe6d0",
+      champagne: "#d8c194",
+      black: "rgba(12, 12, 15, 1)",
+      gold: (context, w, h) => {
+        const g = context.createLinearGradient(0, 0, w * 0.35, h);
+        g.addColorStop(0, "#f6e3a8");
+        g.addColorStop(0.32, "#e0bd6a");
+        g.addColorStop(0.58, "#b38a3e");
+        g.addColorStop(0.8, "#d9b96f");
+        g.addColorStop(1, "#9c742f");
+        return g;
+      },
+    };
+
+    function paintLogo(logo, current) {
+      if (current.logoColor === "white") return logo;
+      if (current.logoColor === "custom") return tintCanvas(logo, current.customColor);
+      return tintCanvas(logo, LOGO_PAINTS[current.logoColor] || "#ffffff");
     }
 
     async function loadSelectedLogo() {
@@ -835,7 +952,7 @@
       const tintedCtx = tinted.getContext("2d");
       tintedCtx.drawImage(source, 0, 0);
       tintedCtx.globalCompositeOperation = "source-in";
-      tintedCtx.fillStyle = color;
+      tintedCtx.fillStyle = typeof color === "function" ? color(tintedCtx, tinted.width, tinted.height) : color;
       tintedCtx.fillRect(0, 0, tinted.width, tinted.height);
       tintedCtx.globalCompositeOperation = "source-over";
       return tinted;
@@ -847,7 +964,7 @@
       if (!logo) return;
 
       const current = values();
-      const displayLogo = current.blackLogo ? tintCanvas(logo, "rgba(12, 12, 15, 1)") : logo;
+      const displayLogo = paintLogo(logo, current);
 
       const maxWidth = els.logoPreview.width * 0.72;
       const maxHeight = els.logoPreview.height * 0.8;
@@ -885,7 +1002,7 @@
       ctx.drawImage(state.sourceImage, 0, 0, width, height);
 
       const current = values();
-      const displayLogo = current.blackLogo ? tintCanvas(logo, "rgba(12, 12, 15, 1)") : logo;
+      const displayLogo = paintLogo(logo, current);
       const margin = Math.round(width * (current.marginPercent / 100));
       const offsetX = Math.round(width * (current.offsetXPercent / 100));
       const offsetY = Math.round(height * (current.offsetYPercent / 100));
@@ -982,6 +1099,13 @@
       }
     }
 
+    function syncCustomColor() {
+      const color = els.customColorInput.value;
+      els.customColorDot.style.background = color;
+      els.customColorValue.textContent = color.toUpperCase();
+      els.customColorRow.classList.toggle("is-visible", values().logoColor === "custom");
+    }
+
     async function resetControls() {
       document.getElementById("logoTypeFull").checked = true;
       els.sizeRange.value = String(defaultSizePercent());
@@ -990,7 +1114,8 @@
       els.offsetXRange.value = "0";
       els.offsetYRange.value = "0";
       els.shadowToggle.checked = false;
-      els.blackLogoToggle.checked = false;
+      document.getElementById("logoColorWhite").checked = true;
+      syncCustomColor();
       await loadSelectedLogo();
       await render();
     }
@@ -1002,9 +1127,14 @@
       els.shareButton.addEventListener("click", shareOutput);
       els.resetButton.addEventListener("click", resetControls);
 
-      [els.sizeRange, els.opacityRange, els.marginRange, els.offsetXRange, els.offsetYRange, els.shadowToggle, els.blackLogoToggle].forEach((control) => {
+      [els.sizeRange, els.opacityRange, els.marginRange, els.offsetXRange, els.offsetYRange, els.shadowToggle].forEach((control) => {
         control.addEventListener("input", render);
         control.addEventListener("change", render);
+      });
+
+      [...els.logoColorInputs, els.customColorInput].forEach((control) => {
+        control.addEventListener("input", () => { syncCustomColor(); render(); });
+        control.addEventListener("change", () => { syncCustomColor(); render(); });
       });
 
       els.logoVariantInputs.forEach((control) => {
